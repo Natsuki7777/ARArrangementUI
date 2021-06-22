@@ -9,12 +9,12 @@ const viewer = new Cesium.Viewer("cesiumContainer", {
 
 var tileset = viewer.scene.primitives.add(
   new Cesium.Cesium3DTileset({
-    url: "./assets/cityjson/13110_meguro-ku/tileset.json",
+    url: "./assets/13110_meguro-ku/tileset.json",
   })
 );
 var tileset = viewer.scene.primitives.add(
   new Cesium.Cesium3DTileset({
-    url: "./assets/cityjson/13111_ota-ku/tileset.json",
+    url: "./assets/13111_ota-ku/tileset.json",
   })
 );
 
