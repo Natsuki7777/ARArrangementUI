@@ -12,7 +12,7 @@ import {
   IonResource,
   Viewer,
   OpenStreetMapImageryProvider,
-  sampleTerrain,
+  sampleTerrainMostDetailed,
 } from "cesium";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import "./css/main.css";
@@ -83,7 +83,7 @@ function createModel(models) {
       let x = model.location.lng;
       let y = model.location.lat;
       var pos = Cartographic.fromDegrees(x, y);
-      var promise = sampleTerrain(viewer.terrainProvider, 11, pos);
+      var promise = sampleTerrainMostDetailed(viewer.terrainProvider, pos);
       promise.then((uppdateposition) => {
         console.log(uppdateposition);
       });
@@ -104,7 +104,7 @@ var positions = [
   Cartographic.fromDegrees(86.925145, 27.988257),
   Cartographic.fromDegrees(87.0, 28.0),
 ];
-var promise = sampleTerrain(viewer.terrainProvider, 11, positions);
+var promise = sampleTerrainMostDetailed(viewer.terrainProvider, positions);
 promise.then((uppdateposition) => {
   console.log(uppdateposition);
 });
