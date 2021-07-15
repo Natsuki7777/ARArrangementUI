@@ -1,9 +1,10 @@
-import Cesium from "cesium";
 import {
   Cesium3DTileset,
   Cesium3DTileStyle,
   createWorldTerrain,
+  Color,
   Cartesian3,
+  Ellipsoid,
   Scene,
   Matrix4,
   Math,
@@ -17,18 +18,25 @@ import {
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import "./css/main.css";
 
+import GsiTerrainProvider from "cesium-gsi-terrain";
+
 Ion.defaultAccessToken =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkMmNkMTY0ZS02ZjQzLTQ1YmMtYjkyOS1iMTM2ZGRhYzY0M2MiLCJpZCI6NTg3MjUsImlhdCI6MTYyNTM2NjEwNn0.hJZUnjHThFQjkUf-Vr8NFNz1r7VSOgxrWuyzh3V8to8";
 
 var viewer = new Viewer("cesiumContainer", {
   terrainProvider: createWorldTerrain(),
+  // terrainProvider: new GsiTerrainProvider({}),
+  baseLayerPicker: false,
   //Use OpenStreetMaps
   imageryProvider: new OpenStreetMapImageryProvider({
     url: "https://a.tile.openstreetmap.org/",
   }),
-  shadows: true,
+  // shadows: true,
   shouldAnimate: true,
 });
+
+//地形の下を見えなくする
+// viewer.scene.globe.depthTestAgainstTerrain = true;
 
 var city1 = viewer.scene.primitives.add(
   new Cesium3DTileset({
@@ -40,34 +48,6 @@ var city2 = viewer.scene.primitives.add(
     url: IonResource.fromAssetId(510091),
   })
 );
-
-// city1.readyPromise.then(function (tileset) {
-//   consol.log("reading");
-//   consol.log("tileset", tileset);
-//   // Position tileset
-//   var boundingSphere = tileset.boundingSphere;
-//   console.log(boundingSphere);
-
-//   var cartographic = Cartographic.fromCartesian(boundingSphere.center);
-//   var heightOffset = viewer.scene.sampleHeight(cartographic);
-//   var surface = Cartesian3.fromRadians(
-//     cartographic.longitude,
-//     cartographic.latitude,
-//     0.0
-//   );
-//   var offset = Cartesian3.fromRadians(
-//     cartographic.longitude,
-//     cartographic.latitude,
-//     heightOffset
-//   );
-//   var translation = Cartesian3.subtract(
-//     offset,
-//     surface,
-//     new Cesium.Cartesian3()
-//   );
-//   tileset.modelMatrix = Matrix4.fromTranslation(translation);
-//   console.log(translation);
-// });
 
 viewer.camera.flyTo({
   destination: Cartesian3.fromDegrees(
@@ -82,14 +62,22 @@ function createModel(models) {
     IonResource.fromAssetId(510457).then(function (resource) {
       let x = model.location.lng;
       let y = model.location.lat;
-      var pos = Cartographic.fromDegrees(x, y);
+
+      // not working
+      var pos = new Cartographic.fromDegrees(x, y);
+      console.log("pos", pos);
+      console.log(viewer.terrainProvider);
       var promise = sampleTerrainMostDetailed(viewer.terrainProvider, pos);
       promise.then((uppdateposition) => {
-        console.log(uppdateposition);
+        console.log(
+          "uppdateposition",
+          Math.toDegrees(uppdateposition.latitude),
+          Math.toDegrees(uppdateposition.longitude),
+          Math.toDegrees(uppdateposition.height)
+        );
       });
 
-      let height = model.height + 74;
-      // let height = model.height + 77;
+      let height = model.height + 77;
       var position = Cartesian3.fromDegrees(x, y, height);
       viewer.entities.add({
         name: model.name,
@@ -99,15 +87,6 @@ function createModel(models) {
     });
   });
 }
-
-var positions = [
-  Cartographic.fromDegrees(86.925145, 27.988257),
-  Cartographic.fromDegrees(87.0, 28.0),
-];
-var promise = sampleTerrainMostDetailed(viewer.terrainProvider, positions);
-promise.then((uppdateposition) => {
-  console.log(uppdateposition);
-});
 
 let models = staticLoadmodels();
 createModel(models);

@@ -32,5 +32,8 @@
     "start": "node_modules\\.bin\\webpack-dev-server --config webpack.config.js",
     "release": "node_modules\\.bin\\webpack --config webpack.release.config.js",
     "serve-release": "node_modules\\.bin\\webpack-dev-server --config webpack.release.config.js --content-base /dist"
+  },
+  "dependencies": {
+    "cesium-gsi-terrain": "^1.0.0"
   }
 }
