@@ -28,18 +28,26 @@ viewer.camera.flyTo({
 
 function createModel(models) {
   models.forEach((model) => {
-    x = model.location.lng;
-    y = model.location.lat;
-    height = model.height + 73;
-    url = `./assets/${model.model_type}/${model.model_type}.gltf`;
+    var x = model.location.lng;
+    var y = model.location.lat;
 
-    var position = Cesium.Cartesian3.fromDegrees(x, y, height);
-    viewer.entities.add({
-      name: model.name,
-      position: position,
-      model: {
-        uri: url,
-      },
+    var terrainProvider = Cesium.createWorldTerrain();
+    // List でないとダメ！！！！！！
+    var positions = [Cesium.Cartographic.fromDegrees(x, y)];
+    var promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
+    Cesium.when(promise, function (updatedPositions) {
+      console.log(updatedPositions);
+      height = model.height + updatedPositions[0].height;
+      url = `./assets/${model.model_type}/${model.model_type}.gltf`;
+
+      var position = Cesium.Cartesian3.fromDegrees(x, y, height);
+      viewer.entities.add({
+        name: model.name,
+        position: position,
+        model: {
+          uri: url,
+        },
+      });
     });
   });
 }
