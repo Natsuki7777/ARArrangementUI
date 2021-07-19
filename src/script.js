@@ -44,10 +44,10 @@ viewer.camera.flyTo({
   ),
 });
 
-//--------------------add 3dmodel from loacal------------------------
-//load models
+//--------------load models------------------------------
 var gltfModels = staticLoadmodels();
 
+//--------------------add 3dmodel from loacal------------------------
 function createModel(models) {
   models.forEach((model) => {
     let x = model.location.lng;
@@ -74,23 +74,6 @@ function createModel(models) {
     });
   });
 }
-
-//---------------3dmodel が選択された時の操作------------------------
-
-function pickEntity(viewer, windowPosition) {
-  var picked = viewer.scene.pick(windowPosition);
-  if (Cesium.defined(picked)) {
-    var entity = Cesium.defaultValue(picked.id, picked.primitive.id);
-    if (entity instanceof Cesium.Entity) {
-      console.log(entity.id);
-      return id;
-    }
-  }
-  return undefined;
-}
-viewer.scene.canvas.addEventListener("click", function (event) {
-  pickEntity(viewer, event);
-});
 
 //  ----------------- add 3dmodel from firebase------------------------
 // function createModel(models) {
@@ -121,7 +104,23 @@ viewer.scene.canvas.addEventListener("click", function (event) {
 //     });
 //   });
 // }
-//  ----------------- add 3dmodel from firebase------------------------
+
+//---------------3dmodel が選択された時の操作------------------------
+
+function pickEntity(viewer, windowPosition) {
+  var picked = viewer.scene.pick(windowPosition);
+  if (Cesium.defined(picked)) {
+    var entity = Cesium.defaultValue(picked.id, picked.primitive.id);
+    if (entity instanceof Cesium.Entity) {
+      console.log(entity.id);
+      return id;
+    }
+  }
+  return undefined;
+}
+viewer.scene.canvas.addEventListener("click", function (event) {
+  pickEntity(viewer, event);
+});
 
 // ------緯度経度表示マーカーを先に作ってこいつを移動させる------------
 viewer.pickTranslucentDepth = true;
