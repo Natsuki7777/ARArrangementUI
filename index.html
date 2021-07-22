@@ -6,81 +6,64 @@
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.82/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.82/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
-    <script src="https://unpkg.com/aframe-orbit-controls@1.2.0/dist/aframe-orbit-controls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+  <script src="https://unpkg.com/aframe-orbit-controls@1.2.0/dist/aframe-orbit-controls.min.js"></script>
 
-  <style>
-    #cesiumContainer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 100%;
-      margin: 0;
-      overflow: hidden;
-      padding: 0;
-      font-family: sans-serif;
-    }
-    html {
-      height: 100%;
-    }
-    body {
-      padding: 0;
-      margin: 0;
-      overflow: hidden;
-      height: 100%;
-    }
-    #menu {
-      position: absolute;
-      left: 10px;
-      top: 120px;
-  }
-  
-    .backdrop {
-      display: inline-block;
-      background: rgba(42, 42, 42, 0.7);
-      border-radius: 5px;
-      border: 1px solid #444;
-      padding: 5px 10px;
-      color: #fff;
-      line-height: 150%;
-      font-size: small;
-  }
-  a-scene {
-    height: 200px;
-    width: 300px;
-  }
-  </style>
+    <link rel="stylesheet" type="text/css" href="./src/style.css">
 </head>
 <body>
   <div id="cesiumContainer" ></div>
   <div class="backdrop" id="menu">
-    <div>Modleid</div>
-    <table>
-      <tr>
-        <td>緯度</td><td><input id="modelLatitude" type="number" step="0.000001"></td>
-      </tr>
-      <tr>
-        <td>経度</td><td><input type="modelLongitude" step="0.000001"></td>
-      </tr>
-      <tr>
-        <td>高さ</td><td><input type="modelHeight" step="1"></td>
-      </tr>
-    </table>
-    <div>
-      <p>右クリック位置</p>
-      <p id="mousePosition"></p>
-    </div>
-    <div>
-      <a-scene  vr-mode-ui="enabled: false" embedded>
-        <a-sky color="#ECECEC"></a-sky>
-      <a-entity
-        camera
-        look-controls
-        orbit-controls="target: 0 1.6 -0.5; minDistance: 0.5; maxDistance: 180; initialPosition: 0 5 15"
-      ></a-entity>
-      </a-scene>
-    </div>
+    <button class="collapsible"　id="addAssetModel"> アセット3Dモデルを追加</button>
+      <div class="content">
+        <button onclick="add3Dmodel()">Pin</button>
+      </div>
+    <button class="collapsible" id="addNewModel">新しい3Dモデルを追加</button>
+      <div class="content">
+        <input type="file" accept=".gltf">
+      </div>
+    <button class="collapsible" id="nowModel">選択中の3Dモデル</button>
+      <div class="content">
+        <table>
+          <tr>
+            <td>Model ID</td><td id="modelId" ></td>
+          </tr>
+          <tr>
+            <td>Model Name</td><td  ><input id="modelName" type="text"></td>
+          </tr>
+          <tr>
+            <td>緯度</td><td><input id="modelLatitude" type="number"  onchange="changeModelPosition()">°</td>
+          </tr>
+          <tr>
+            <td>経度</td><td><input id="modelLongitude" type="number" onchange="changeModelPosition()">°</td>
+          </tr>
+          <tr>
+            <td>高さ</td><td><input id="modelHeight" type="number"   onchange="changeModelPosition()">m</td>
+          </tr>
+        </table>
+        <div>
+          <a-scene  vr-mode-ui="enabled: false" embedded>
+            <a-sky color="#ECECEC"></a-sky>
+            <a-entity id="viewerModel">
+            </a-entity>
+          <a-entity
+            camera
+            look-controls
+            orbit-controls="target: 0 1.6 -0.5; minDistance: 0.5; maxDistance: 180; initialPosition: 0 5 15"
+          ></a-entity>
+          </a-scene>
+        </div>
+      </div>
+      <table>
+        <tr>
+          右クリック位置
+        </tr>
+        <tr id="mousePosition">
+
+        </tr>
+      </table>
+ 
+    
   </div>
   
   <!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->

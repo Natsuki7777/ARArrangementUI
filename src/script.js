@@ -35,13 +35,36 @@ var tileset2 = viewer.scene.primitives.add(
     url: "./src/assets/13111_ota-ku/tileset.json",
   })
 );
+var initialPosition = new Cesium.Cartesian3.fromDegrees(
+  139.6864690639537,
+  35.603949084082174,
+  300
+);
+var initialOrientation = new Cesium.HeadingPitchRoll.fromDegrees(
+  -27.1077496389876024807,
+  -41.987223091598949054,
+  0.025883251314954971306
+);
+var homeCameraView = {
+  destination: initialPosition,
+  orientation: {
+    heading: initialOrientation.heading,
+    pitch: initialOrientation.pitch,
+    roll: initialOrientation.roll,
+  },
+};
+// Override the default home button
+viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function (
+  e
+) {
+  e.cancel = true;
+  viewer.scene.camera.flyTo(homeCameraView);
+});
 
 viewer.camera.flyTo({
-  destination: Cesium.Cartesian3.fromDegrees(
-    139.6846917645,
-    35.6059416358,
-    200
-  ),
+  destination: initialPosition,
+  orientation: initialOrientation,
+  duration: 3,
 });
 
 //--------------load models------------------------------
@@ -59,8 +82,8 @@ function createModel(models) {
     let promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
     Cesium.when(promise, function (updatedPositions) {
       console.log(updatedPositions);
-      height = model.height + updatedPositions[0].height;
-      url = `./src/assets/${model.model_type}/${model.model_type}.gltf`;
+      let height = model.height + updatedPositions[0].height;
+      let url = `./src/assets/${model.model_type}/${model.model_type}.gltf`;
 
       let position = Cesium.Cartesian3.fromDegrees(x, y, height);
       viewer.entities.add({
@@ -112,8 +135,28 @@ function pickEntity(viewer, windowPosition) {
   if (Cesium.defined(picked)) {
     var entity = Cesium.defaultValue(picked.id, picked.primitive.id);
     if (entity instanceof Cesium.Entity) {
-      console.log(entity.id);
-      return id;
+      let id = entity.id;
+      // console.dir(entity);
+      // console.log(entity.name);
+      // console.log(entity.id);
+      // console.log(entity.position);
+      let cartesian = entity.position.getValue();
+      var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+      let gltf = gltfModels.find((item) => item.id === id);
+      document.getElementById("modelId").innerHTML = gltf.id;
+      document.getElementById("modelName").value = gltf.name;
+      document.getElementById("modelLatitude").value = gltf.location.lat;
+      document.getElementById("modelLongitude").value = gltf.location.lng;
+      document.getElementById("modelHeight").value = gltf.height;
+      let url = `./src/assets/${gltf.model_type}/${gltf.model_type}.gltf`;
+      let oldel = document.getElementById("viewerModel");
+      let newel = document.createElement("a-entity");
+      newel.setAttribute("id", "viewerModel");
+      newel.setAttribute("gltf-model", `url(${url})`);
+      newel.setAttribute("animation-mixer", "");
+      newel.setAttribute("response-type", "arraybuffer");
+      let scene = document.querySelector("a-scene");
+      scene.replaceChild(newel, oldel);
     }
   }
   return undefined;
@@ -121,6 +164,31 @@ function pickEntity(viewer, windowPosition) {
 viewer.scene.canvas.addEventListener("click", function (event) {
   pickEntity(viewer, event);
 });
+
+//---------------positionを変えたとき-----------------------
+function changeModelPosition() {
+  let id = document.getElementById("modelId").innerHTML;
+  let name = document.getElementById("modelName").innerHTML;
+  let latitude = parseFloat(document.getElementById("modelLatitude").value);
+  let longitude = parseFloat(document.getElementById("modelLongitude").value);
+  let height = parseFloat(document.getElementById("modelHeight").value);
+  let entity = viewer.entities.getById(id);
+  let terrainProvider = Cesium.createWorldTerrain();
+  // List でないとダメ！！！！！！
+  let positions = [Cesium.Cartographic.fromDegrees(longitude, latitude)];
+  let promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
+  Cesium.when(promise, function (updatedPositions) {
+    console.log(updatedPositions);
+    let newheight = updatedPositions[0].height;
+    let updateheight = height + updatedPositions[0].height;
+    let finalposition = Cesium.Cartesian3.fromDegrees(
+      longitude,
+      latitude,
+      updateheight
+    );
+    entity.position = finalposition;
+  });
+}
 
 // ------緯度経度表示マーカーを先に作ってこいつを移動させる------------
 viewer.pickTranslucentDepth = true;
@@ -165,6 +233,51 @@ viewer.scene.canvas.addEventListener("contextmenu", function (event) {
     return;
   }
 });
+
+//-------------- collaps menu bar ---------
+var coll = document.getElementsByClassName("collapsible");
+var colli;
+
+for (colli = 0; colli < coll.length; colli++) {
+  coll[colli].addEventListener("click", function () {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.maxHeight) {
+      content.style.maxHeight = null;
+    } else {
+      content.style.maxHeight = content.scrollHeight + "px";
+    }
+  });
+}
+
+//--------------------adding new 3dmodel-------------------
+function add3Dmodel() {
+  let modelid = 10;
+  let model_type = "pin";
+  let modelname = "new pin";
+  let url = `./src/assets/${model_type}/${model_type}.gltf`;
+  let new3Dmodel = viewer.entities.add({
+    id: modelid,
+    name: modelname,
+    model: {
+      uri: url,
+      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+    },
+  });
+  let centerx = document.documentElement.clientWidth / 2;
+  let centery = document.documentElement.clientHeight / 2;
+  const screenCenterPosition = new Cesium.Cartesian2(centerx, centery);
+  const screenCenterLocation = viewer.scene.pickPosition(screenCenterPosition);
+  const cartio = Cesium.Cartographic.fromCartesian(screenCenterLocation);
+  if (cartio) {
+    var longitudeString = Cesium.Math.toDegrees(cartio.longitude);
+    var latitudeString = Cesium.Math.toDegrees(cartio.latitude);
+    new3Dmodel.position = screenCenterLocation;
+  } else {
+    return;
+  }
+  viewer.flyTo(new3Dmodel);
+}
 
 //---------------------------------------------------------------------------
 window.addEventListener("load", () => {
