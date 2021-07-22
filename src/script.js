@@ -223,9 +223,9 @@ viewer.scene.canvas.addEventListener("contextmenu", function (event) {
   if (cartio) {
     var longitudeString = Cesium.Math.toDegrees(cartio.longitude);
     var latitudeString = Cesium.Math.toDegrees(cartio.latitude);
-    document.getElementById("mousePosition").innerHTML =
-      "(" + latitudeString + ", " + longitudeString + ")";
-
+    document.getElementById("mousePositionLatitude").innerHTML = latitudeString;
+    document.getElementById("mousePositionLongitude").innerHTML =
+      longitudeString;
     locationMarker.position = selectedLocation;
     locationMarker.label.text =
       "(" + latitudeString + ", " + longitudeString + ")";
@@ -264,15 +264,31 @@ function add3Dmodel() {
       heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
     },
   });
-  let centerx = document.documentElement.clientWidth / 2;
-  let centery = document.documentElement.clientHeight / 2;
-  const screenCenterPosition = new Cesium.Cartesian2(centerx, centery);
-  const screenCenterLocation = viewer.scene.pickPosition(screenCenterPosition);
-  const cartio = Cesium.Cartographic.fromCartesian(screenCenterLocation);
-  if (cartio) {
-    var longitudeString = Cesium.Math.toDegrees(cartio.longitude);
-    var latitudeString = Cesium.Math.toDegrees(cartio.latitude);
-    new3Dmodel.position = screenCenterLocation;
+  if (document.getElementById("mousePositionLongitude").innerHTML) {
+    let positionLatitude = parseFloat(
+      document.getElementById("mousePositionLatitude").innerHTML
+    );
+    let positionLongitude = parseFloat(
+      document.getElementById("mousePositionLongitude").innerHTML
+    );
+    console.log(positionLatitude);
+    let cart = Cesium.Cartographic.fromDegrees(
+      positionLongitude,
+      positionLatitude
+    );
+    var addingLocation = Cesium.Cartographic.toCartesian(cart);
+
+    console.log("loacation", addingLocation);
+  } else {
+    let centerx = document.documentElement.clientWidth / 2;
+    let centery = document.documentElement.clientHeight / 2;
+    let screenCenterPosition = new Cesium.Cartesian2(centerx, centery);
+    var addingLocation = viewer.scene.pickPosition(screenCenterPosition);
+  }
+
+  if (addingLocation) {
+    console.log("lll", addingLocation);
+    new3Dmodel.position = addingLocation;
   } else {
     return;
   }
