@@ -1,18 +1,30 @@
 //------------------------firebase----------------------------------------
-// const firebaseConfig = {
-//   apiKey: "AIzaSyD4YpyFameyN-vur5feYE989hb6VpxmNos",
-//   authDomain: "socialar-9a0d4.firebaseapp.com",
-//   databaseURL:
-//     "https://socialar-9a0d4-default-rtdb.asia-southeast1.firebasedatabase.app",
-//   projectId: "socialar-9a0d4",
-//   storageBucket: "socialar-9a0d4.appspot.com",
-//   messagingSenderId: "236737913974",
-//   appId: "1:236737913974:web:31fe2c2f8b3ba475eb6b57",
-//   measurementId: "G-XJLY1GV226",
-// };
-// // Initialize Firebase
-// firebase.initializeApp(firebaseConfig);
-// var storage = firebase.app().storage("gs://socialar-9a0d4.appspot.com");
+const firebaseConfig = {
+  apiKey: "AIzaSyD4YpyFameyN-vur5feYE989hb6VpxmNos",
+  authDomain: "socialar-9a0d4.firebaseapp.com",
+  databaseURL:
+    "https://socialar-9a0d4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "socialar-9a0d4",
+  storageBucket: "socialar-9a0d4.appspot.com",
+  messagingSenderId: "236737913974",
+  appId: "1:236737913974:web:31fe2c2f8b3ba475eb6b57",
+  measurementId: "G-XJLY1GV226",
+};
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+var storage = firebase.app().storage("gs://socialar-9a0d4.appspot.com");
+var database = firebase.database();
+var modelRef = firebase.database().ref("/titech");
+
+//--------------load models------------------------------
+window.addEventListener("load", () => {
+  console.log("loaded");
+  modelRef.on("value", (snapshot) => {
+    const gltfModels = snapshot.val();
+    console.dir(gltfModels);
+    createEntities(gltfModels);
+  });
+});
 
 //---------------------Cesium 基本設定----------------------------------------
 const viewer = new Cesium.Viewer("cesiumContainer", {
@@ -67,88 +79,84 @@ viewer.camera.flyTo({
   duration: 3,
 });
 
-//--------------load models------------------------------
-var gltfModels = staticLoadmodels();
-
-//--------------------add 3dmodel from loacal------------------------
-function createModel(models) {
-  models.forEach((model) => {
-    let x = model.location.lng;
-    let y = model.location.lat;
-
-    let terrainProvider = Cesium.createWorldTerrain();
+//--------make entitis from firebase realtime database-----------
+function createEntities(data) {
+  console.log("createentity", data);
+  for (const ID in data) {
+    let gltf = data[ID];
+    let x = gltf.location.longitude;
+    let y = gltf.location.latitude;
+    let terrainProvider = viewer.terrainProvider;
     // List でないとダメ！！！！！！
     let positions = [Cesium.Cartographic.fromDegrees(x, y)];
     let promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
     Cesium.when(promise, function (updatedPositions) {
       console.log(updatedPositions);
-      let height = model.height + updatedPositions[0].height;
-      let url = `./src/assets/${model.model_type}/${model.model_type}.gltf`;
-
+      let height = gltf.location.height + updatedPositions[0].height;
       let position = Cesium.Cartesian3.fromDegrees(x, y, height);
-      viewer.entities.add({
-        id: model.id,
-        name: model.name,
-        position: position,
-        model: {
-          uri: url,
-        },
+      console.log(position);
+      let ref = storage.ref(`/3Dmodel/${gltf.model}.gltf`).getDownloadURL();
+      ref.then((url) => {
+        if (viewer.entities.getById(ID)) {
+          console.log(viewer.entities.getById(ID));
+          entity = viewer.entities.getById(ID);
+          entity.name = gltf.name;
+          entity.position = position;
+          entity.model.uri = url;
+          entity.dataRef = gltf;
+        } else {
+          viewer.entities.add({
+            id: ID,
+            name: gltf.name,
+            position: position,
+            model: {
+              uri: url,
+            },
+            dataRef: gltf,
+          });
+        }
+        if (document.getElementById(`addButton${gltf.model}`)) {
+        } else {
+          const addModelButton = document.createElement("button");
+          addModelButton.innerHTML = gltf.model;
+          addModelButton.id = `addButton${gltf.model}`;
+          addModelButton.addEventListener("click", () => {
+            add3Dmodel(data, gltf.model);
+          });
+          document
+            .getElementById("addModelButtons")
+            .appendChild(addModelButton);
+        }
       });
     });
-  });
+  }
 }
 
-//  ----------------- add 3dmodel from firebase------------------------
-// function createModel(models) {
-//   models.forEach((model) => {
-//     var x = model.location.lng;
-//     var y = model.location.lat;
-
-//     var terrainProvider = Cesium.createWorldTerrain();
-//     // List でないとダメ！！！！！！
-//     var positions = [Cesium.Cartographic.fromDegrees(x, y)];
-//     var promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
-//     Cesium.when(promise, function (updatedPositions) {
-//       console.log(updatedPositions);
-//       height = model.height + updatedPositions[0].height;
-//       console.log(model.name);
-//       var position = Cesium.Cartesian3.fromDegrees(x, y, height);
-//       console.log(position);
-//       var ref = storage.ref("/3Dmodel/pin.gltf").getDownloadURL();
-//       ref.then((url) => {
-//         viewer.entities.add({
-//           name: model.name,
-//           position: position,
-//           model: {
-//             uri: url,
-//           },
-//         });
-//       });
-//     });
-//   });
-// }
-
 //---------------3dmodel が選択された時の操作------------------------
-
+//entityに情報を載せて送る
 function pickEntity(viewer, windowPosition) {
   var picked = viewer.scene.pick(windowPosition);
   if (Cesium.defined(picked)) {
     var entity = Cesium.defaultValue(picked.id, picked.primitive.id);
     if (entity instanceof Cesium.Entity) {
       let id = entity.id;
-      // console.dir(entity);
-      // console.log(entity.name);
-      // console.log(entity.id);
+      console.dir(entity.dataRef);
+      console.log(entity.model.uri.getValue());
+      console.log(entity.id);
       // console.log(entity.position);
-      let cartesian = entity.position.getValue();
-      var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
-      let gltf = gltfModels.find((item) => item.id === id);
-      document.getElementById("modelId").innerHTML = gltf.id;
+      // let cartesian = entity.position.getValue();
+      // var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+      let gltf = entity.dataRef;
+      document.getElementById("modelId").innerHTML = id;
       document.getElementById("modelName").value = gltf.name;
-      document.getElementById("modelLatitude").value = gltf.location.lat;
-      document.getElementById("modelLongitude").value = gltf.location.lng;
-      document.getElementById("modelHeight").value = gltf.height;
-      let url = `./src/assets/${gltf.model_type}/${gltf.model_type}.gltf`;
+      document.getElementById("modelLatitude").value = gltf.location.latitude;
+      document.getElementById("modelLongitude").value = gltf.location.longitude;
+      document.getElementById("modelHeight").value = gltf.location.height;
+      document.getElementById("modelLabel").checked = gltf.label;
+      document.getElementById("modelDistance").checked = gltf.distance;
+      document.getElementById("modelLink").value = gltf.link;
+      document.getElementById("modelCaption").value = gltf.caption;
+      let url = entity.model.uri.getValue();
       let oldel = document.getElementById("viewerModel");
       let newel = document.createElement("a-entity");
       newel.setAttribute("id", "viewerModel");
@@ -157,37 +165,105 @@ function pickEntity(viewer, windowPosition) {
       newel.setAttribute("response-type", "arraybuffer");
       let scene = document.querySelector("a-scene");
       scene.replaceChild(newel, oldel);
+      if (gltf.label) {
+        let labeltext = document.getElementById("viewerModelLabel");
+        labeltext.setAttribute("value", gltf.name);
+      } else {
+        let labeltext = document.getElementById("viewerModelLabel");
+        labeltext.setAttribute("value", "");
+      }
+      if (gltf.distance) {
+        let labeltext = document.getElementById("viewerModelDistance");
+        labeltext.setAttribute("value", "10m");
+      } else {
+        let labeltext = document.getElementById("viewerModelDistance");
+        labeltext.setAttribute("value", "");
+      }
+      let modelViewer = document.getElementById("nowModel");
+      if (modelViewer.classList.contains("active")) {
+      } else {
+        document.getElementById("nowModel").click();
+      }
     }
   }
-  return undefined;
 }
+
+function flyToSelectedModel() {
+  if (document.getElementById("modelId").innerHTML) {
+    let id = document.getElementById("modelId").innerHTML;
+    let entity = viewer.entities.getById(id);
+    viewer.flyTo(entity);
+  }
+}
+
 viewer.scene.canvas.addEventListener("click", function (event) {
   pickEntity(viewer, event);
 });
-
-//---------------positionを変えたとき-----------------------
-function changeModelPosition() {
+//---------------モデルの情報を変えたとき-----------------------
+function changeModelProperty() {
   let id = document.getElementById("modelId").innerHTML;
-  let name = document.getElementById("modelName").innerHTML;
+  let modelname = document.getElementById("modelName").value;
   let latitude = parseFloat(document.getElementById("modelLatitude").value);
   let longitude = parseFloat(document.getElementById("modelLongitude").value);
   let height = parseFloat(document.getElementById("modelHeight").value);
-  let entity = viewer.entities.getById(id);
-  let terrainProvider = Cesium.createWorldTerrain();
-  // List でないとダメ！！！！！！
-  let positions = [Cesium.Cartographic.fromDegrees(longitude, latitude)];
-  let promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
-  Cesium.when(promise, function (updatedPositions) {
-    console.log(updatedPositions);
-    let newheight = updatedPositions[0].height;
-    let updateheight = height + updatedPositions[0].height;
-    let finalposition = Cesium.Cartesian3.fromDegrees(
-      longitude,
-      latitude,
-      updateheight
-    );
-    entity.position = finalposition;
+  // let entity = viewer.entities.getById(id);
+  //------- firebase 側がレンダリングを自動でしてくれる
+  // let terrainProvider = Cesium.createWorldTerrain();
+  // // List でないとダメ！！！！！！
+  // let positions = [Cesium.Cartographic.fromDegrees(longitude, latitude)];
+  // let promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
+  // Cesium.when(promise, function (updatedPositions) {
+  //   console.log(updatedPositions);
+  //   let updateheight = height + updatedPositions[0].height;
+  //   let finalposition = Cesium.Cartesian3.fromDegrees(
+  //     longitude,
+  //     latitude,
+  //     updateheight
+  //   );
+  //   entity.position = finalposition;
+
+  //-------realtimedatabase の方も変更-----------------
+  modelRef.child(`/${id}`).update({
+    name: modelname,
+    location: {
+      latitude: latitude,
+      longitude: longitude,
+      height: height,
+    },
   });
+  // });
+}
+
+//-------------------その他の情報を変えたとき-----------------
+function changeModelData() {
+  if (document.getElementById("modelId").innerHTML) {
+    let id = document.getElementById("modelId").innerHTML;
+    let name = document.getElementById("modelName").value;
+    let label = document.getElementById("modelLabel").checked;
+    let distance = document.getElementById("modelDistance").checked;
+    let link = document.getElementById("modelLink").value;
+    let caption = document.getElementById("modelCaption").value;
+    if (label) {
+      let labeltext = document.getElementById("viewerModelLabel");
+      labeltext.setAttribute("value", name);
+    } else {
+      let labeltext = document.getElementById("viewerModelLabel");
+      labeltext.setAttribute("value", "");
+    }
+    if (distance) {
+      let labeltext = document.getElementById("viewerModelDistance");
+      labeltext.setAttribute("value", "10m");
+    } else {
+      let labeltext = document.getElementById("viewerModelDistance");
+      labeltext.setAttribute("value", "");
+    }
+    modelRef.child(`/${id}`).update({
+      label: label,
+      distance: distance,
+      link: link,
+      caption: caption,
+    });
+  }
 }
 
 // ------緯度経度表示マーカーを先に作ってこいつを移動させる------------
@@ -251,108 +327,81 @@ for (colli = 0; colli < coll.length; colli++) {
 }
 
 //--------------------adding new 3dmodel-------------------
-function add3Dmodel() {
-  let modelid = 10;
-  let model_type = "pin";
-  let modelname = "new pin";
-  let url = `./src/assets/${model_type}/${model_type}.gltf`;
-  let new3Dmodel = viewer.entities.add({
-    id: modelid,
-    name: modelname,
-    model: {
-      uri: url,
-      heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-    },
+function add3Dmodel(data, modelName) {
+  let newId =
+    Math.max(...Object.keys(data).map((str) => parseInt(str, 10))) + 1;
+  let ref = storage.ref(`/3Dmodel/${modelName}.gltf`).getDownloadURL();
+  console.log("pushed");
+  ref.then((url) => {
+    if (document.getElementById("mousePositionLongitude").innerHTML) {
+      let positionLatitude = parseFloat(
+        document.getElementById("mousePositionLatitude").innerHTML
+      );
+      let positionLongitude = parseFloat(
+        document.getElementById("mousePositionLongitude").innerHTML
+      );
+      // ----- firebaseがやってくれる----------------
+      // let positions = [
+      //   Cesium.Cartographic.fromDegrees(positionLongitude, positionLatitude),
+      // ];
+      // let promise = Cesium.sampleTerrainMostDetailed(
+      //   viewer.terrainProvider,
+      //   positions
+      // );
+      // Cesium.when(promise, function (updatedPositions) {
+      //   let height = updatedPositions[0].height;
+      //   let addingLocation = Cesium.Cartesian3.fromDegrees(
+      //     positionLongitude,
+      //     positionLatitude,
+      //     height
+      //   );
+      let dataRef = {
+        name: "New 3DObject",
+        location: {
+          latitude: positionLatitude,
+          longitude: positionLongitude,
+          height: 0,
+        },
+        model: modelName,
+        label: false,
+        minDistance: 0,
+        maxDistance: 0,
+        distance: false,
+        caption: "",
+        link: "",
+      };
+
+      modelRef.child(`/${newId}`).set(dataRef);
+
+      // });
+    } else {
+      let centerx = document.documentElement.clientWidth / 2;
+      let centery = document.documentElement.clientHeight / 2;
+      let screenCenterPosition = new Cesium.Cartesian2(centerx, centery);
+      let addingLocation = viewer.scene.pickPosition(screenCenterPosition);
+      let cartographic = Cesium.Cartographic.fromCartesian(addingLocation);
+      let positionLongitude = Cesium.Math.toDegrees(cartographic.longitude);
+      let positionLatitude = Cesium.Math.toDegrees(cartographic.latitude);
+      let dataRef = {
+        name: "New 3DObject",
+        location: {
+          latitude: positionLatitude,
+          longitude: positionLongitude,
+          height: 0,
+        },
+        model: modelName,
+        label: false,
+        minDistance: 0,
+        maxDistance: 0,
+        distance: false,
+        caption: "",
+        link: "",
+      };
+      modelRef.child(`/${newId}`).set(dataRef);
+    }
   });
-  if (document.getElementById("mousePositionLongitude").innerHTML) {
-    let positionLatitude = parseFloat(
-      document.getElementById("mousePositionLatitude").innerHTML
-    );
-    let positionLongitude = parseFloat(
-      document.getElementById("mousePositionLongitude").innerHTML
-    );
-    console.log(positionLatitude);
-    let cart = Cesium.Cartographic.fromDegrees(
-      positionLongitude,
-      positionLatitude
-    );
-    var addingLocation = Cesium.Cartographic.toCartesian(cart);
-
-    console.log("loacation", addingLocation);
-  } else {
-    let centerx = document.documentElement.clientWidth / 2;
-    let centery = document.documentElement.clientHeight / 2;
-    let screenCenterPosition = new Cesium.Cartesian2(centerx, centery);
-    var addingLocation = viewer.scene.pickPosition(screenCenterPosition);
-  }
-
-  if (addingLocation) {
-    console.log("lll", addingLocation);
-    new3Dmodel.position = addingLocation;
-  } else {
-    return;
-  }
-  viewer.flyTo(new3Dmodel);
 }
-
 //---------------------------------------------------------------------------
-window.addEventListener("load", () => {
-  console.log("loaded");
-  createModel(gltfModels);
-});
-
-function staticLoadmodels() {
-  return [
-    {
-      id: 1,
-      name: "本館",
-      location: {
-        lat: 35.60456954,
-        lng: 139.68385423,
-      },
-      height: 20,
-      model_type: "pin",
-      caption: "",
-      open_time: "",
-    },
-    {
-      id: 2,
-      name: "滝プラザ",
-      location: {
-        lat: 35.60618984,
-        lng: 139.68464816,
-      },
-      height: 20,
-      model_type: "pin",
-      caption: "",
-      open_time: "",
-    },
-    {
-      id: 3,
-      name: "東京工業大学附属図書館",
-      location: {
-        lat: 35.60644499,
-        lng: 139.68397225,
-      },
-      height: 20,
-      model_type: "pin",
-      caption: "",
-      open_time: "",
-    },
-    {
-      id: 4,
-      name: "百年記念館",
-      location: {
-        lat: 35.6068287769,
-        lng: 139.68478654721,
-      },
-      height: 20,
-      model_type: "pin",
-      caption: "",
-      open_time: "",
-    },
-  ];
-}
 
 //------------infoBox で操作しようとした残骸---------------
 // viewer.infoBox.frame.removeAttribute("sandbox");

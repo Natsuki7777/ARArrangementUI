@@ -1,7 +1,6 @@
 {
-  "titech": [
-    {
-      "id": 1,
+  "titech": {
+    "1": {
       "name": "本館",
       "location": {
         "latitude": 35.60456954,
@@ -9,15 +8,14 @@
         "height": 20
       },
       "model": "pin",
-      "label": "",
+      "label": true,
       "minDistance": 0,
       "maxDistance": 0,
       "distance": true,
       "caption": "",
       "link": ""
     },
-    {
-      "id": 2,
+    "2": {
       "name": "滝プラザ",
       "location": {
         "latitude": 35.60618984,
@@ -25,15 +23,14 @@
         "height": 20
       },
       "model": "pin",
-      "label": "",
+      "label": true,
       "minDistance": 0,
       "maxDistance": 0,
       "distance": true,
       "caption": "",
       "link": ""
     },
-    {
-      "id": 3,
+    "3": {
       "name": "東京工業大学附属図書館",
       "location": {
         "latitude": 35.60644499,
@@ -41,15 +38,14 @@
         "height": 20
       },
       "model": "pin",
-      "label": "",
+      "label": true,
       "minDistance": 0,
       "maxDistance": 0,
       "distance": true,
       "caption": "",
       "link": ""
     },
-    {
-      "id": 4,
+    "4": {
       "name": "百年記念館",
       "location": {
         "latitude": 35.6068287769,
@@ -57,12 +53,12 @@
         "height": 20
       },
       "model": "pin",
-      "label": "",
+      "label": true,
       "minDistance": 0,
       "maxDistance": 0,
       "distance": true,
       "caption": "",
       "link": ""
     }
-  ]
+  }
 }

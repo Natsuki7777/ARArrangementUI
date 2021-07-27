@@ -15,8 +15,7 @@
   <div id="cesiumContainer" ></div>
   <div class="backdrop" id="menu">
     <button class="collapsible"　id="addAssetModel"> アセット3Dモデルを追加</button>
-      <div class="content">
-        <button onclick="add3Dmodel()">Pin</button>
+      <div id="addModelButtons" class="content">
       </div>
     <button class="collapsible" id="addNewModel">新しい3Dモデルを追加</button>
       <div class="content">
@@ -26,19 +25,22 @@
       <div class="content">
         <table>
           <tr>
+            <button onClick="flyToSelectedModel()">モデルへ飛ぶ</button>
+          </tr>
+          <tr>
             <td>Model ID</td><td id="modelId" ></td>
           </tr>
           <tr>
-            <td>Model Name</td><td  ><input id="modelName" type="text"></td>
+            <td>Model Name</td><td  ><input id="modelName" type="text" onchange="changeModelProperty()"></td>
           </tr>
           <tr>
-            <td>緯度</td><td><input id="modelLatitude" type="number"  onchange="changeModelPosition()">°</td>
+            <td>緯度</td><td><input id="modelLatitude" type="number"  onchange="changeModelProperty()">°</td>
           </tr>
           <tr>
-            <td>経度</td><td><input id="modelLongitude" type="number" onchange="changeModelPosition()">°</td>
+            <td>経度</td><td><input id="modelLongitude" type="number" onchange="changeModelProperty()">°</td>
           </tr>
           <tr>
-            <td>高さ</td><td><input id="modelHeight" type="number"   onchange="changeModelPosition()">m</td>
+            <td>高さ</td><td><input id="modelHeight" type="number"   onchange="changeModelProperty()">m</td>
           </tr>
         </table>
         <div>
@@ -46,6 +48,24 @@
             <a-sky color="#ECECEC"></a-sky>
             <a-entity id="viewerModel">
             </a-entity>
+            <a-text 
+            id="viewerModelLabel"
+            font-image="./src/assets/font/noto-sans-cjk-jp-msdf.png" 
+            font="./src/assets/font/noto-sans-cjk-jp-msdf.json" 
+            scale="50 50 50" 
+            color="black"
+            negate=false
+            position="5 5.0 0">
+            </a-text>
+            <a-text 
+            id="viewerModelDistance"
+            font-image="./src/assets/font/noto-sans-cjk-jp-msdf.png" 
+            font="./src/assets/font/noto-sans-cjk-jp-msdf.json" 
+            scale="50 50 50" 
+            color="black"
+            negate=false
+            position="5 -5.0 0">
+            </a-text>
           <a-entity
             camera
             look-controls
@@ -53,7 +73,23 @@
           ></a-entity>
           </a-scene>
         </div>
+        <table>
+          <tr>
+            <td>名前の表示</td><td><input type="checkbox" id="modelLabel" onchange="changeModelData()"/></td>
+          </tr>
+          <tr>
+            <td>距離の表示</td><td><input type="checkbox" id="modelDistance" onchange="changeModelData()"/></td>
+          </tr>
+          <tr>
+            <td>リンク</td><td><input  id="modelLink" onchange="changeModelData()"/></td>
+          </tr>
+          <tr>
+            <td>キャプション</td><td><input id="modelCaption" onchange="changeModelData()"/></td>
+          </tr>
+          <td><button>削除</button></td>
+        </table>
       </div>
+      <hr>
       <table>
         <tr>
           右クリック位置
@@ -78,11 +114,12 @@
   
   <!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->
   <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-  <!-- <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script> -->
+  <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-app.js"></script>
   <!-- If you enabled Analytics in your project, add the Firebase SDK for Analytics -->
-  <!-- <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-analytics.js"></script> -->
+  <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-analytics.js"></script>
   <!-- Add Firebase products that you want to use -->
-  <!-- <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script> -->
+  <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-database.js"></script>
   <script src="./src/script.js"></script>
  </div>
 </body>
