@@ -19,7 +19,9 @@
       </div>
     <button class="collapsible" id="addNewModel">新しい3Dモデルを追加</button>
       <div class="content">
-        <input type="file" accept=".gltf">
+          <input id="gltfInput" type="file" accept=".gltf" onchange="onFileSelect( this );">
+          <input id="newModelName" type="text">
+          <button id="uploadNewModel">アップロード</button>
       </div>
     <button class="collapsible" id="nowModel">選択中の3Dモデル</button>
       <div class="content">
@@ -86,13 +88,14 @@
           <tr>
             <td>キャプション</td><td><input id="modelCaption" onchange="changeModelData()"/></td>
           </tr>
-          <td><button>削除</button></td>
+          <td><button id="deleteModel">削除</button></td>
         </table>
       </div>
       <hr>
       <table>
         <tr>
-          右クリック位置
+          <td>右クリック位置</td>
+          <td><button id="copyLatLon">貼り付ける</button></td> 
         </tr>
         <tr>
           <td>
@@ -105,6 +108,9 @@
             経度
           </td>  
           <td id="mousePositionLongitude"></td>
+        </tr>
+        <tr>
+          <td>緯度経度表示</td><td><input type="checkbox" id="latlonDisplay" onchange="latlonDisplay()" checked/></td>
         </tr>
 
       </table>

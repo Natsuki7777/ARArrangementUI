@@ -23,6 +23,9 @@ window.addEventListener("load", () => {
     const gltfModels = snapshot.val();
     console.dir(gltfModels);
     createEntities(gltfModels);
+    document.getElementById("uploadNewModel").addEventListener("click", () => {
+      newModelUploadAndAdd(gltfModels);
+    });
   });
 });
 
@@ -266,6 +269,16 @@ function changeModelData() {
   }
 }
 
+//--------削除ボタン押したとき--------------
+document.getElementById("deleteModel").addEventListener("click", () => {
+  if (document.getElementById("modelId").innerHTML) {
+    let id = document.getElementById("modelId").innerHTML;
+    modelRef.child(`/${id}`).remove();
+    let entity = viewer.entities.getById(`${id}`);
+    viewer.entities.remove(entity);
+  }
+});
+
 // ------緯度経度表示マーカーを先に作ってこいつを移動させる------------
 viewer.pickTranslucentDepth = true;
 const locationMarker = viewer.entities.add({
@@ -286,6 +299,18 @@ const locationMarker = viewer.entities.add({
     pixelOffset: new Cesium.Cartesian2(0, -9),
     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
   },
+});
+
+document.getElementById("copyLatLon").addEventListener("click", () => {
+  if (document.getElementById("mousePositionLatitude").innerHTML) {
+    document.getElementById("modelLatitude").value = document.getElementById(
+      "mousePositionLatitude"
+    ).innerHTML;
+    document.getElementById("modelLongitude").value = document.getElementById(
+      "mousePositionLongitude"
+    ).innerHTML;
+    document.getElementById("modelLongitude").onchange();
+  }
 });
 
 //----------------------- mouse position--------------------------
@@ -309,6 +334,14 @@ viewer.scene.canvas.addEventListener("contextmenu", function (event) {
     return;
   }
 });
+
+function latlonDisplay() {
+  if (document.getElementById("latlonDisplay").checked) {
+    locationMarker.label.show = true;
+  } else {
+    locationMarker.label.show = false;
+  }
+}
 
 //-------------- collaps menu bar ---------
 var coll = document.getElementsByClassName("collapsible");
@@ -360,7 +393,7 @@ function add3Dmodel(data, modelName) {
         location: {
           latitude: positionLatitude,
           longitude: positionLongitude,
-          height: 0,
+          height: 10,
         },
         model: modelName,
         label: false,
@@ -371,7 +404,12 @@ function add3Dmodel(data, modelName) {
         link: "",
       };
 
-      modelRef.child(`/${newId}`).set(dataRef);
+      modelRef
+        .child(`/${newId}`)
+        .set(dataRef)
+        .then(() => {
+          viewer.flyTo(viewer.entities.getById(`${newId}`));
+        });
 
       // });
     } else {
@@ -401,7 +439,38 @@ function add3Dmodel(data, modelName) {
     }
   });
 }
-//---------------------------------------------------------------------------
+
+//-------------------------adding new 3dmodel-----------------------------
+function onFileSelect(inputElement) {
+  let newModelName = document.getElementById("newModelName");
+  let filename = inputElement.files[0].name.match(/([^/]*)\./)[1];
+  newModelName.value = filename;
+}
+
+function newModelUploadAndAdd(data) {
+  if (document.getElementById("newModelName").value) {
+    console.log("pushed upload");
+    let gltfInput = document.getElementById("gltfInput");
+    let newModelName = document.getElementById("newModelName").value;
+    const gltf = gltfInput.files[0];
+    storage
+      .ref(`/3Dmodel/${newModelName}.gltf`)
+      .put(gltf)
+      .then(
+        (snapshot) => {
+          console.log("on progress");
+
+          var progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log("Upload is " + progress + "% done");
+          add3Dmodel(data, newModelName);
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+  }
+}
 
 //------------infoBox で操作しようとした残骸---------------
 // viewer.infoBox.frame.removeAttribute("sandbox");
