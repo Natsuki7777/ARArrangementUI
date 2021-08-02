@@ -30,8 +30,15 @@ window.addEventListener("load", () => {
 });
 
 //---------------------Cesium 基本設定----------------------------------------
+Cesium.Ion.defaultAccessToken =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxOWNiZmM2OC1mMzA4LTRlM2UtOTc0OS1jNWMwYjk4MzM2YmQiLCJpZCI6NTg3MjUsImlhdCI6MTYyNzgzMDkyNn0.eXZA6FknYoWPrVWC3bUIePW_tnIeVnkJaci4Uq1Qgak";
 const viewer = new Cesium.Viewer("cesiumContainer", {
-  terrainProvider: Cesium.createWorldTerrain(),
+  terrainProvider: new Cesium.CesiumTerrainProvider({
+    url: Cesium.IonResource.fromAssetId(529292),
+  }),
+  //   terrainProvider : new Cesium.ArcGISTiledElevationTerrainProvider({
+  //     url: 'https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer'
+  // }),
   imageryProvider: new Cesium.OpenStreetMapImageryProvider({
     url: "https://a.tile.openstreetmap.org/",
   }),
