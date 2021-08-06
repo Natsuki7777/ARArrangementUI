@@ -12,41 +12,52 @@ input[type=number] {
 
 
 #cesiumContainer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    overflow: hidden;
-    padding: 0;
-    font-family: sans-serif;
-  }
-  html {
-    height: 100%;
-  }
-  body {
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-    height: 100%;
-  }
-  #menu {
-    position: absolute;
-    left: 5px;
-    top: 5px;
-    width: 320px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  font-family: sans-serif;
 }
-
-  .backdrop {
-    display: inline-block;
-    background: rgba(42, 42, 42, 0.7);
-    border-radius: 5px;
-    border: 1px solid #444;
-    padding: 5px 10px;
-    color: #fff;
-    line-height: 150%;
-    font-size: small;
+html {
+  height: 100%;
+}
+body {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  height: 100%;
+}
+#menu {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  width: 320px;
+}
+#modelView {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 320px;
+}
+#rightclickposition {
+  position: absolute;
+  right: 5px;
+  bottom: 30px;
+  width: 320px;
+}
+.backdrop {
+  display: inline-block;
+  background: rgba(42, 42, 42, 0.7);
+  border-radius: 5px;
+  border: 1px solid #444;
+  padding: 5px 10px;
+  color: #fff;
+  line-height: 150%;
+  font-size: small;
 }
 a-scene {
   height: 200px;
@@ -73,3 +84,10 @@ a-scene {
     overflow: hidden;
     transition: max-height 0.2s ease-out;
   }
+
+.cesium-viewer-toolbar{
+  display: none;
+}
+.entityButton:hover{
+  background-color:grey;
+}

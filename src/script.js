@@ -45,8 +45,14 @@ const viewer = new Cesium.Viewer("cesiumContainer", {
   infoBox: false,
   shadows: true,
   shouldAnimate: true,
+  geocoder: false,
+  sceneModePicker: false,
+  baseLayerPicker: false,
+  navigationHelpButton: false,
+  animation: false,
+  timeline: false,
 });
-
+viewer.scene.globe.depthTestAgainstTerrain = true;
 var tileset1 = viewer.scene.primitives.add(
   new Cesium.Cesium3DTileset({
     url: "./src/assets/13110_meguro-ku/tileset.json",
@@ -136,6 +142,24 @@ function createEntities(data) {
           document
             .getElementById("addModelButtons")
             .appendChild(addModelButton);
+        }
+        if (document.getElementById(`entityListID${ID}`)) {
+        } else {
+          let modelListContainer =
+            document.getElementById("modelListContainer");
+          let entityButton = document.createElement("tr");
+          entityButton.id = `entityListID${ID}`;
+          entityButton.className = "entityButton";
+          let entityName = document.createElement("td");
+          entityName.innerHTML = gltf.name;
+          let entityModel = document.createElement("td");
+          entityModel.innerHTML = gltf.model;
+          entityButton.appendChild(entityName);
+          entityButton.appendChild(entityModel);
+          entityButton.addEventListener("click", () => {
+            viewer.flyTo(viewer.entities.getById(ID));
+          });
+          modelListContainer.appendChild(entityButton);
         }
       });
     });
