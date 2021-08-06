@@ -51,6 +51,7 @@ const viewer = new Cesium.Viewer("cesiumContainer", {
   navigationHelpButton: false,
   animation: false,
   timeline: false,
+  homeButton: false,
 });
 viewer.scene.globe.depthTestAgainstTerrain = true;
 var tileset1 = viewer.scene.primitives.add(
@@ -63,6 +64,12 @@ var tileset2 = viewer.scene.primitives.add(
     url: "./src/assets/13111_ota-ku/tileset.json",
   })
 );
+var tileset3 = viewer.scene.primitives.add(
+  new Cesium.Cesium3DTileset({
+    url: "./src/assets/13112_setagaya-ku/tileset.json",
+  })
+);
+
 var initialPosition = new Cesium.Cartesian3.fromDegrees(
   139.6864690639537,
   35.603949084082174,
@@ -82,18 +89,36 @@ var homeCameraView = {
   },
 };
 // Override the default home button
-viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function (
-  e
-) {
-  e.cancel = true;
-  viewer.scene.camera.flyTo(homeCameraView);
-});
+// viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function (
+//   e
+// ) {
+//   e.cancel = true;
+//   viewer.scene.camera.flyTo(homeCameraView);
+// });
 
 viewer.camera.flyTo({
   destination: initialPosition,
   orientation: initialOrientation,
   duration: 3,
 });
+
+// ------------- adding abalable model list at add model ------------------
+storage
+  .ref("/3Dmodel")
+  .listAll()
+  .then((res) => {
+    console.log(res);
+    res.items.forEach((ref) => {
+      modelname = ref.name;
+      const addModelButton = document.createElement("button");
+      addModelButton.innerHTML = modelname;
+      addModelButton.id = `addButton${modelname}`;
+      addModelButton.addEventListener("click", () => {
+        add3Dmodel(data, modelname);
+      });
+      document.getElementById("addModelButtons").appendChild(addModelButton);
+    });
+  });
 
 //--------make entitis from firebase realtime database-----------
 function createEntities(data) {
@@ -103,6 +128,11 @@ function createEntities(data) {
     let x = gltf.location.longitude;
     let y = gltf.location.latitude;
     let terrainProvider = viewer.terrainProvider;
+    var heading = Cesium.Math.toRadians(90);
+    let pitch = 0;
+    let roll = 0;
+    let hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+
     // List でないとダメ！！！！！！
     let positions = [Cesium.Cartographic.fromDegrees(x, y)];
     let promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
@@ -111,6 +141,10 @@ function createEntities(data) {
       let height = gltf.location.height + updatedPositions[0].height;
       let position = Cesium.Cartesian3.fromDegrees(x, y, height);
       console.log(position);
+      var orientation = Cesium.Transforms.headingPitchRollQuaternion(
+        position,
+        hpr
+      );
       let ref = storage.ref(`/3Dmodel/${gltf.model}.gltf`).getDownloadURL();
       ref.then((url) => {
         if (viewer.entities.getById(ID)) {
@@ -125,24 +159,35 @@ function createEntities(data) {
             id: ID,
             name: gltf.name,
             position: position,
+            orientation: orientation,
             model: {
               uri: url,
+            },
+            label: {
+              text: `${gltf.name}`,
+              font: "14pt monospace",
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              outlineWidth: 4,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+              pixelOffset: new Cesium.Cartesian2(0, -9),
+              show: gltf.label,
+              sizeInMeters: true,
             },
             dataRef: gltf,
           });
         }
-        if (document.getElementById(`addButton${gltf.model}`)) {
-        } else {
-          const addModelButton = document.createElement("button");
-          addModelButton.innerHTML = gltf.model;
-          addModelButton.id = `addButton${gltf.model}`;
-          addModelButton.addEventListener("click", () => {
-            add3Dmodel(data, gltf.model);
-          });
-          document
-            .getElementById("addModelButtons")
-            .appendChild(addModelButton);
-        }
+        // if (document.getElementById(`addButton${gltf.model}`)) {
+        // } else {
+        //   const addModelButton = document.createElement("button");
+        //   addModelButton.innerHTML = gltf.model;
+        //   addModelButton.id = `addButton${gltf.model}`;
+        //   addModelButton.addEventListener("click", () => {
+        //     add3Dmodel(data, gltf.model);
+        //   });
+        //   document
+        //     .getElementById("addModelButtons")
+        //     .appendChild(addModelButton);
+        // }
         if (document.getElementById(`entityListID${ID}`)) {
         } else {
           let modelListContainer =
@@ -280,9 +325,13 @@ function changeModelData() {
     if (label) {
       let labeltext = document.getElementById("viewerModelLabel");
       labeltext.setAttribute("value", name);
+      let entity = viewer.entities.getById(id);
+      entity.label.show = true;
     } else {
       let labeltext = document.getElementById("viewerModelLabel");
       labeltext.setAttribute("value", "");
+      let entity = viewer.entities.getById(id);
+      entity.label.show = false;
     }
     if (distance) {
       let labeltext = document.getElementById("viewerModelDistance");

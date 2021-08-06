@@ -85,9 +85,9 @@ a-scene {
     transition: max-height 0.2s ease-out;
   }
 
-.cesium-viewer-toolbar{
+/* .cesium-viewer-toolbar{
   display: none;
-}
+} */
 .entityButton:hover{
   background-color:grey;
 }
